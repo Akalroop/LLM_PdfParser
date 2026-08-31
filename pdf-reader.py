@@ -1,9 +1,10 @@
 from openai import OpenAI
 from pypdf import PdfReader
+from pymupdf4llm import pymupdf
 
 client = OpenAI(
-    base_url=("127.0.0.1:11434"),
-    api_key="ollama"
+    base_url=("http://localhost:11434/v1"),
+    api_key="ollama",
 )
 
 MODEL = "medgemma"
@@ -32,16 +33,13 @@ def ask_file(filename: str, question: str) -> str:
         messages=[
             {
                 "role" : "system",
-                "content":( "You are a medical document parser.",
-                " Extract only data explicitly stated in the PDF text — never infer,"
+                "content":( 
+                "You are a medical document parser.Extract only data explicitly stated in the PDF text — never infer,"
                 " diagnose, guess, or fill in typical values; missing fields must be null."
                 " Preserve numbers, units, dates, and medication names/dosages exactly as written,"
                 " with no reformatting or normalization. If text is unclear or garbled (e.g. from OCR),"
                 " mark it `'unclear': true` instead of guessing."
                 " Ignore headers, footers, and boilerplate unless clinically relevant."
-                "Output valid JSON only, matching this schema: {schema}. "
-                "If the document doesn't match the expected type,"
-                " output {'error': 'document_type_mismatch'}."
                 ),
             },
             {
@@ -60,4 +58,8 @@ if __name__ == "__main__":
         print("Usage: python pdf-reader.py <path_to_pdf> <question>")
         sys.exit(1)
 
+    pdf_path = sys.argv[1]
+    user_question = " ".join(sys.argv[2:])
     
+    answer = ask_file(pdf_path, user_question)
+    print(answer)
