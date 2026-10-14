@@ -1,0 +1,29 @@
+services:
+  pdf-parser:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: llm-pdf-parser:latest
+    container_name: llm_pdf_parser
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434/v1
+      - OLLAMA_MODEL=medgemma1.5
+    volumes:
+      - ./data:/app/data
+      - ./app.py:/app/app.py
+      - ./pdf-reader.py:/app/pdf-reader.py
+    depends_on:
+      - ollama
+    stdin_open: true
+    tty: true
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama_service
+    ports:
+      - "11434:11434"
+    volumes:
+      - D:/OllamaModels:/root/.ollama/models
+

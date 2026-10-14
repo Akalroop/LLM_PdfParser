@@ -5,19 +5,19 @@ Requirements:
     pip install openai pypdf
 
 Make sure Ollama is running locally and you've pulled the model, e.g.:
-    ollama pull medgemma
+    ollama pull medgemma1.5
     ollama serve   (usually already running as a background service)
 """
 
-from openai import OpenAI
-from pypdf import PdfReader
+import os
+
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+MODEL = os.getenv("OLLAMA_MODEL", "medgemma1.5")
 
 client = OpenAI(
-    base_url="http://localhost:11434/v1",  # Ollama's OpenAI-compatible endpoint
-    api_key="ollama",  # required by the SDK but unused by Ollama
+    base_url=OLLAMA_BASE_URL,  # Ollama's OpenAI-compatible endpoint
+    api_key=os.getenv("OLLAMA_API_KEY", "ollama"),  # required by the SDK but unused by Ollama
 )
-
-MODEL = "medgemma"
 
 
 def extract_pdf_text(filename: str) -> str:
