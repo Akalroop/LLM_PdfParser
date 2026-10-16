@@ -1,21 +1,38 @@
+import os
+import pymupdf
 from openai import OpenAI
 from pypdf import PdfReader
-from pymupdf4llm import pymupdf
+
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+MODEL = os.getenv("OLLAMA_MODEL", "medgemma1.5")
 
 client = OpenAI(
-    base_url=("http://localhost:11434/v1"),
-    api_key="ollama",
+    base_url=OLLAMA_BASE_URL,
+    api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
 )
 
-MODEL = "medgemma"
+def fix_pua(text: str) -> str:
+    """Decodes characters shifted into Unicode Private Use Area (0xF000 - 0xF0FF)."""
+    return "".join(
+        chr(ord(c) - 0xF000) if 0xF000 <= ord(c) <= 0xF0FF else c
+        for c in text
+    )
 
 def extract_pdf_text(filename: str) -> str:
-    """Extracts all the text from the PDF file"""
-    reader = PdfReader(filename)
+    """Extracts and normalizes text from the PDF file using pymupdf with pypdf fallback."""
     text_parts = []
-    for page_num, page in enumerate(reader.pages, start=1):
-        page_text = page.extract_text() or ""
-        text_parts.append(f"--- Page {page_num} ---\n{page_text}")
+    try:
+        doc = pymupdf.open(filename)
+        for page_num, page in enumerate(doc, start=1):
+            raw_text = page.get_text("text") or ""
+            cleaned_text = fix_pua(raw_text)
+            text_parts.append(f"--- Page {page_num} ---\n{cleaned_text}")
+    except Exception:
+        reader = PdfReader(filename)
+        for page_num, page in enumerate(reader.pages, start=1):
+            raw_text = page.extract_text() or ""
+            cleaned_text = fix_pua(raw_text)
+            text_parts.append(f"--- Page {page_num} ---\n{cleaned_text}")
     return "\n\n".join(text_parts)
 
 
